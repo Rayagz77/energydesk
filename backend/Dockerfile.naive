@@ -4,7 +4,7 @@
 #   docker build -f Dockerfile.naive -t energydesk-api:naive .
 #   docker build -t energydesk-api:optimise .
 #   docker images energydesk-api
-FROM python:3.12
+FROM python:3.15
 WORKDIR /app
 COPY . .
 RUN pip install -r requirements-dev.txt
