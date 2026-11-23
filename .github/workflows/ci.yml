@@ -205,7 +205,7 @@ jobs:
           echo "Image : ${IMAGE}:${VERSION}-${SHORT_SHA}"
       - uses: docker/setup-buildx-action@v3
       - name: Build (charge localement pour le scan)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.context }}
           load: true
