@@ -161,7 +161,7 @@ jobs:
               -f deploy/helm/energydesk/values-$env.yaml --set externalDatabase.host=db.example > rendered-$env.yaml
             ./kubeconform -strict -summary -ignore-missing-schemas rendered-$env.yaml
           done
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
       - name: Terraform fmt (rapport ; corriger avec "terraform fmt -recursive infra/terraform")
         continue-on-error: true
         run: terraform fmt -check -recursive -diff infra/terraform
