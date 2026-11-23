@@ -1,0 +1,16 @@
+# Environnement de developpement (namespace energydesk-dev). Deploiement automatique par Argo CD.
+environment: dev
+image:
+  rayagz77: rayagz77
+  tag: "0.1.0"   # mis a jour par la CI a chaque push sur main
+api:
+  replicas: 1
+  hpa:
+    minReplicas: 1
+    maxReplicas: 4
+frontend:
+  replicas: 1
+ingress:
+  host: dev.energydesk.local
+backup:
+  enabled: false

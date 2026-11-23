@@ -1,0 +1,15 @@
+# Rien de tout cela ne doit entrer dans l'image (taille, secrets, artefacts locaux).
+.env
+.env.*
+**/__pycache__
+**/*.pyc
+.venv
+venv
+.pytest_cache
+.ruff_cache
+.coverage
+htmlcov
+tests
+Dockerfile*
+.dockerignore
+*.md

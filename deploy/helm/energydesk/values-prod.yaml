@@ -1,0 +1,21 @@
+# Environnement de production local (namespace energydesk-prod). Synchronisation manuelle dans Argo CD.
+environment: prod
+image:
+  rayagz77: rayagz77
+  tag: "0.1.0"
+api:
+  replicas: 2
+  hpa:
+    minReplicas: 2
+    maxReplicas: 5
+frontend:
+  replicas: 2
+ingress:
+  host: energydesk.local
+  tls:
+    enabled: true
+    secretName: energydesk-tls
+backup:
+  enabled: true
+networkPolicy:
+  enabled: false

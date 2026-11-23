@@ -1,0 +1,11 @@
+# Dockerfile VOLONTAIREMENT NON OPTIMISE - sert uniquement de mesure "avant" pour le FinOps.
+# Image Python complete, une seule etape, dependances de dev incluses, execution en root.
+# Ne jamais deployer cette image. Comparer sa taille a celle du Dockerfile multi-stage :
+#   docker build -f Dockerfile.naive -t energydesk-api:naive .
+#   docker build -t energydesk-api:optimise .
+#   docker images energydesk-api
+FROM python:3.12
+WORKDIR /app
+COPY . .
+RUN pip install -r requirements-dev.txt
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EnergyDesk — Connexion</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/login.js"></script>
+</head>
+<body>
+  <main class="auth-box">
+    <div class="card">
+      <h1>Energy<span class="accent">Desk</span></h1>
+      <p class="notice">Signalement des incidents techniques de comptage électrique. Données exclusivement fictives.</p>
+
+      <div class="tabs">
+        <button type="button" class="btn" id="tab-login">Connexion</button>
+        <button type="button" class="btn secondary" id="tab-register">Créer un compte</button>
+      </div>
+
+      <div id="message" class="message hidden" role="alert"></div>
+
+      <form id="login-form" novalidate>
+        <div class="field">
+          <label for="login-email">Email</label>
+          <input id="login-email" name="username" type="email" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="login-password">Mot de passe</label>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn" type="submit">Se connecter</button>
+      </form>
+
+      <form id="register-form" class="hidden" novalidate>
+        <div class="field">
+          <label for="reg-name">Nom complet</label>
+          <input id="reg-name" name="full_name" minlength="2" maxlength="100" required>
+        </div>
+        <div class="field">
+          <label for="reg-email">Email</label>
+          <input id="reg-email" name="email" type="email" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="reg-password">Mot de passe (12 caractères minimum)</label>
+          <input id="reg-password" name="password" type="password" minlength="12" autocomplete="new-password" required>
+        </div>
+        <button class="btn" type="submit">Créer mon compte</button>
+      </form>
+    </div>
+  </main>
+</body>
+</html>

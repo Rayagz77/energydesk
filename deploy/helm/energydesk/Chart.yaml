@@ -1,0 +1,7 @@
+apiVersion: v2
+name: energydesk
+description: EnergyDesk - application de gestion des incidents de comptage (front, API, worker, donnees)
+type: application
+version: 0.1.0        # version du chart
+appVersion: "0.1.0"   # version de l'application
+keywords: [energydesk, fastapi, rabbitmq, postgresql]

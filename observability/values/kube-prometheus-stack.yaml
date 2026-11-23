@@ -1,0 +1,60 @@
+# kube-prometheus-stack : Prometheus, Alertmanager, Grafana, kube-state-metrics, node-exporter.
+# Profil allege pour un cluster de demonstration (Codespaces 16 Go).
+
+prometheus:
+  prometheusSpec:
+    # Lire TOUS les ServiceMonitor et PrometheusRule du cluster (dont ceux du chart EnergyDesk).
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    retention: 2d
+    scrapeInterval: 15s
+    evaluationInterval: 15s
+    resources:
+      requests: { cpu: 100m, memory: 400Mi }
+      limits: { memory: 1200Mi }
+
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      requests: { cpu: 10m, memory: 32Mi }
+      limits: { memory: 128Mi }
+
+grafana:
+  # Le mot de passe admin est genere par le chart (secret kube-prometheus-stack-grafana).
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL      # charge les dashboards fournis par le chart EnergyDesk
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      uid: loki
+      access: proxy
+      url: http://loki-gateway.monitoring.svc.cluster.local
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 384Mi }
+
+# Composants du plan de controle non joignables sur Minikube/k3s : on les desactive
+# pour eviter des alertes "Down" sans rapport avec l'application.
+kubeEtcd:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+prometheus-node-exporter:
+  resources:
+    requests: { cpu: 10m, memory: 24Mi }
+    limits: { memory: 64Mi }
+
+kube-state-metrics:
+  resources:
+    requests: { cpu: 10m, memory: 48Mi }
+    limits: { memory: 128Mi }

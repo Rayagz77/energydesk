@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EnergyDesk — Nouveau ticket</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/new-ticket.js"></script>
+</head>
+<body>
+  <main class="container">
+    <h1>Signaler un incident</h1>
+    <div id="message" class="message hidden" role="alert"></div>
+    <form class="card" id="ticket-form" novalidate>
+      <div class="field">
+        <label for="title">Titre (5 à 120 caractères)</label>
+        <input id="title" name="title" minlength="5" maxlength="120" required
+               placeholder="Ex. Compteur ne transmettant plus ses données">
+      </div>
+      <div class="field">
+        <label for="category">Type d'incident</label>
+        <select id="category" name="category" required>
+          <option value="transmission">Compteur ne transmettant plus</option>
+          <option value="index">Anomalie de relevé ou d'index</option>
+          <option value="equipement">Dysfonctionnement d'équipement</option>
+          <option value="intervention">Demande de vérification ou d'intervention</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="equipment">Identifiant d'équipement (fictif)</label>
+        <input id="equipment" name="equipment_id" required pattern="CPT-FICTIF-[0-9]{6}"
+               placeholder="CPT-FICTIF-000123">
+      </div>
+      <div class="field">
+        <label for="priority">Priorité</label>
+        <select id="priority" name="priority">
+          <option value="basse">Basse</option>
+          <option value="moyenne" selected>Moyenne</option>
+          <option value="haute">Haute</option>
+          <option value="critique">Critique</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" maxlength="5000" required></textarea>
+      </div>
+      <div class="field">
+        <label for="file">Pièce jointe (facultative — PDF, PNG ou JPEG, 5 Mo maximum)</label>
+        <input id="file" name="file" type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg">
+      </div>
+      <button class="btn" type="submit" id="submit">Créer le ticket</button>
+    </form>
+  </main>
+</body>
+</html>

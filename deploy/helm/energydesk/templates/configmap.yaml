@@ -1,0 +1,29 @@
+# Configuration non sensible. Les mots de passe et cles sont dans le Secret (existingSecret).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ed.fullname" . }}-config
+  labels:
+    {{- include "ed.labels" . | nindent 4 }}
+data:
+  APP_ENV: {{ .Values.environment | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+  DB_HOST: {{ include "ed.dbHost" . | quote }}
+  DB_PORT: {{ ternary "5432" (toString .Values.externalDatabase.port) .Values.postgres.enabled | quote }}
+  DB_NAME: {{ .Values.config.dbName | quote }}
+  DB_USER: {{ .Values.config.dbUser | quote }}
+  DB_SSLMODE: {{ ternary "prefer" .Values.externalDatabase.sslMode .Values.postgres.enabled | quote }}
+  JWT_EXPIRE_MINUTES: {{ .Values.config.jwtExpireMinutes | quote }}
+  MAX_UPLOAD_MB: {{ .Values.config.maxUploadMb | quote }}
+  S3_ENDPOINT_URL: {{ include "ed.s3Endpoint" . | quote }}
+  S3_REGION: {{ .Values.s3.region | quote }}
+  S3_BUCKET_ATTACHMENTS: {{ .Values.s3.bucket | quote }}
+  S3_CREATE_BUCKET: {{ .Values.s3.createBucket | quote }}
+  BACKUP_BUCKET: {{ .Values.backup.bucket | quote }}
+  RABBITMQ_HOST: {{ printf "%s-rabbitmq" (include "ed.fullname" .) | quote }}
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_USER: {{ .Values.config.rabbitmqUser | quote }}
+  NOTIFICATION_RECIPIENT: {{ .Values.config.notificationRecipient | quote }}
+  WORKER_SWEEP_INTERVAL: {{ .Values.worker.sweepIntervalSeconds | quote }}
+  WORKER_SWEEP_MIN_AGE: {{ .Values.worker.sweepMinAgeSeconds | quote }}
+  API_UPSTREAM: {{ printf "%s-api:8000" (include "ed.fullname" .) | quote }}

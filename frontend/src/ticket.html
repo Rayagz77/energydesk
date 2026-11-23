@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EnergyDesk — Détail du ticket</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/ticket.js"></script>
+</head>
+<body>
+  <main class="container">
+    <div id="message" class="message hidden" role="alert"></div>
+    <h1 id="title">Chargement…</h1>
+    <div class="two-cols">
+      <div>
+        <section class="card">
+          <h2>Description</h2>
+          <p class="description" id="description"></p>
+        </section>
+        <section class="card">
+          <h2>Commentaires</h2>
+          <div id="comments"></div>
+          <form id="comment-form">
+            <div class="field">
+              <label for="comment">Ajouter un commentaire</label>
+              <textarea id="comment" name="content" maxlength="2000" required></textarea>
+            </div>
+            <button class="btn" type="submit">Publier</button>
+          </form>
+        </section>
+      </div>
+      <div>
+        <section class="card">
+          <h2>Informations</h2>
+          <dl class="meta" id="meta"></dl>
+        </section>
+        <section class="card hidden" id="agent-panel">
+          <h2>Traitement (agent)</h2>
+          <form id="status-form">
+            <div class="field">
+              <label for="status">Nouveau statut</label>
+              <select id="status" name="status"></select>
+            </div>
+            <button class="btn small" type="submit">Changer le statut</button>
+          </form>
+          <hr>
+          <form id="assign-form">
+            <div class="field">
+              <label for="agent">Attribuer à</label>
+              <select id="agent" name="agent_id"></select>
+            </div>
+            <button class="btn small" type="submit">Attribuer</button>
+          </form>
+        </section>
+        <section class="card">
+          <h2>Pièces jointes</h2>
+          <ul class="files" id="files"></ul>
+          <form id="upload-form">
+            <div class="field">
+              <label for="file">Ajouter un fichier (PDF, PNG, JPEG, 5 Mo max)</label>
+              <input id="file" name="file" type="file" accept=".pdf,.png,.jpg,.jpeg" required>
+            </div>
+            <button class="btn small" type="submit">Téléverser</button>
+          </form>
+        </section>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

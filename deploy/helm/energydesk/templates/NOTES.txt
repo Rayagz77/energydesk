@@ -1,0 +1,12 @@
+EnergyDesk {{ .Values.image.tag }} deploye dans le namespace {{ .Release.Namespace }} (environnement {{ .Values.environment }}).
+
+Verifier :
+  kubectl get pods,svc,ingress,hpa,pvc -n {{ .Release.Namespace }}
+
+Acceder a l'application :
+  http{{ if .Values.ingress.tls.enabled }}s{{ end }}://{{ .Values.ingress.host }}/
+  Documentation de l'API : http{{ if .Values.ingress.tls.enabled }}s{{ end }}://{{ .Values.ingress.host }}/api/docs
+
+Creer un agent support :
+  kubectl exec -n {{ .Release.Namespace }} deploy/{{ include "ed.fullname" . }}-api -- \
+    sh -c 'AGENT_PASSWORD="<mot-de-passe>" python -m app.cli create-agent --email agent@energydesk.local --full-name "Agent Demo"'

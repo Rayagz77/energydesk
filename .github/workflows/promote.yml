@@ -1,0 +1,40 @@
+# Promotion manuelle d'une version deja validee en dev vers test ou prod (GitOps).
+# Onglet Actions > promote > Run workflow : choisir l'environnement et le tag (ex. 0.1.0-a1b2c3d).
+name: promote
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environnement cible
+        type: choice
+        options: [test, prod, cloud]
+        required: true
+      tag:
+        description: Tag d'image a deployer (visible dans values-dev.yaml ou sur GHCR)
+        type: string
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verifier le format du tag
+        run: |
+          echo "${{ inputs.tag }}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9a-f]{7})?$' \
+            || { echo "Tag invalide"; exit 1; }
+      - name: Ecrire le tag dans values-${{ inputs.environment }}.yaml
+        run: |
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
+          FILE="deploy/helm/energydesk/values-${{ inputs.environment }}.yaml"
+          sed -i -E "s|^(  owner: ).*|\1${OWNER}|; s|^(  tag: ).*|\1\"${{ inputs.tag }}\"   # promu par ${{ github.actor }}|" "$FILE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$FILE"
+          git diff --cached --quiet && { echo "Deja a cette version"; exit 0; }
+          git commit -m "deploy(${{ inputs.environment }}): energydesk ${{ inputs.tag }}"
+          git push

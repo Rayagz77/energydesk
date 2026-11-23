@@ -1,0 +1,19 @@
+[project]
+name = "energydesk-worker"
+version = "0.1.0"
+description = "Worker asynchrone EnergyDesk : notifications a la creation d'un ticket"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "S", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106", "S608"]

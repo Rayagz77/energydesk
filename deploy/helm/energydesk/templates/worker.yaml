@@ -1,0 +1,84 @@
+{{- $name := printf "%s-worker" (include "ed.fullname" .) -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "ed.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  replicas: {{ .Values.worker.replicas }}
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "ed.selector" (dict "ctx" . "component" "worker") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ed.selector" (dict "ctx" . "component" "worker") | nindent 8 }}
+        app.kubernetes.io/version: {{ .Values.image.tag | quote }}
+      annotations:
+        {{- include "ed.configChecksum" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "ed.fullname" . }}-app
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        runAsUser: 10001
+        runAsGroup: 10001
+      containers:
+        - name: worker
+          image: {{ include "ed.image" (dict "ctx" . "component" "worker") }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: metrics
+              containerPort: 9100
+          envFrom:
+            - configMapRef:
+                name: {{ include "ed.fullname" . }}-config
+          env:
+            {{- include "ed.secretEnv" (dict "ctx" . "name" "DB_PASSWORD") | nindent 12 }}
+            {{- include "ed.secretEnv" (dict "ctx" . "name" "S3_ACCESS_KEY") | nindent 12 }}
+            {{- include "ed.secretEnv" (dict "ctx" . "name" "S3_SECRET_KEY") | nindent 12 }}
+            {{- include "ed.secretEnv" (dict "ctx" . "name" "RABBITMQ_PASSWORD") | nindent 12 }}
+          livenessProbe:
+            httpGet: { path: /healthz, port: metrics }
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.worker.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+# Service utilise uniquement par Prometheus pour lire les metriques du worker.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "ed.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  selector:
+    {{- include "ed.selector" (dict "ctx" . "component" "worker") | nindent 4 }}
+  ports:
+    - name: metrics
+      port: 9100
+      targetPort: metrics

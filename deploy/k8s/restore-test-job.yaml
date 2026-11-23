@@ -1,0 +1,67 @@
+# Test de restauration (ISO 27001 A.8.13) - applique par scripts/restore-test.ps1.
+# 1) initContainer : recupere la derniere sauvegarde dans le bucket.
+# 2) conteneur     : la restaure dans une base vide "energydesk_restore_test",
+#                    puis affiche le nombre de lignes par table (preuve dans les logs du Job).
+# Les valeurs __NAMESPACE__ et __API_IMAGE__ sont remplacees par le script.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: energydesk-restore-test
+  namespace: __NAMESPACE__
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: energydesk
+        app.kubernetes.io/component: backup   # autorise par les NetworkPolicies vers PostgreSQL
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: { type: RuntimeDefault }
+      initContainers:
+        - name: download
+          image: __API_IMAGE__
+          command: ["python", "-m", "app.backup", "download-latest", "/restore/latest.dump"]
+          envFrom:
+            - configMapRef: { name: energydesk-config }
+          env:
+            - name: S3_ACCESS_KEY
+              valueFrom: { secretKeyRef: { name: energydesk-secrets, key: S3_ACCESS_KEY } }
+            - name: S3_SECRET_KEY
+              valueFrom: { secretKeyRef: { name: energydesk-secrets, key: S3_SECRET_KEY } }
+          volumeMounts:
+            - { name: restore, mountPath: /restore }
+      containers:
+        - name: restore
+          image: postgres:16-alpine
+          command: ["sh", "-c"]
+          args:
+            - >-
+              set -e;
+              dropdb --if-exists -h "$DB_HOST" -U "$DB_USER" energydesk_restore_test;
+              createdb -h "$DB_HOST" -U "$DB_USER" energydesk_restore_test;
+              pg_restore -h "$DB_HOST" -U "$DB_USER" -d energydesk_restore_test --no-rayagz77 /restore/latest.dump;
+              echo "=== Restauration terminee : lignes par table ===";
+              for t in users tickets comments attachments; do
+                printf "%s : " "$t";
+                psql -h "$DB_HOST" -U "$DB_USER" -d energydesk_restore_test -tA -c "SELECT count(*) FROM $t";
+              done;
+              echo "=== Comparaison avec la base de production ===";
+              psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -tA -c "SELECT 'tickets en production : ' || count(*) FROM tickets"
+          envFrom:
+            - configMapRef: { name: energydesk-config }
+          env:
+            - name: PGPASSWORD
+              valueFrom: { secretKeyRef: { name: energydesk-secrets, key: DB_PASSWORD } }
+          volumeMounts:
+            - { name: restore, mountPath: /restore, readOnly: true }
+      volumes:
+        - name: restore
+          emptyDir: {}

@@ -1,0 +1,81 @@
+{{- $name := printf "%s-frontend" (include "ed.fullname" .) -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "ed.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  replicas: {{ .Values.frontend.replicas }}
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.rollingUpdate.maxUnavailable }}
+  selector:
+    matchLabels:
+      {{- include "ed.selector" (dict "ctx" . "component" "frontend") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ed.selector" (dict "ctx" . "component" "frontend") | nindent 8 }}
+        app.kubernetes.io/version: {{ .Values.image.tag | quote }}
+    spec:
+      serviceAccountName: {{ include "ed.fullname" . }}-app
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        runAsUser: 101
+        runAsGroup: 101
+      containers:
+        - name: frontend
+          image: {{ include "ed.image" (dict "ctx" . "component" "frontend") }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: API_UPSTREAM
+              value: {{ printf "%s-api:8000" (include "ed.fullname" .) | quote }}
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.frontend.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          # Systeme de fichiers en lecture seule : Nginx ecrit uniquement dans ces volumes temporaires.
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: nginx-conf
+              mountPath: /etc/nginx/conf.d
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: nginx-conf
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "ed.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  selector:
+    {{- include "ed.selector" (dict "ctx" . "component" "frontend") | nindent 4 }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

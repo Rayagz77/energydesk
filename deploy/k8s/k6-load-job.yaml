@@ -1,0 +1,36 @@
+# Test de charge k6 execute DANS le cluster (pas de limite de debit liee a un port-forward).
+# Prerequis : kubectl create configmap k6-script -n energydesk-dev --from-file=scripts/load/k6-hpa.js
+# Lancer    : kubectl apply -f deploy/k8s/k6-load-job.yaml
+# Resultat  : kubectl logs -f job/k6-load -n energydesk-dev   (resume final = charge mesuree)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k6-load
+  namespace: energydesk-dev
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 1800
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: k6-load
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      containers:
+        - name: k6
+          image: grafana/k6:latest
+          args: ["run", "/scripts/k6-hpa.js"]
+          env:
+            - name: BASE_URL
+              value: http://energydesk-frontend
+          resources:
+            requests: { cpu: 200m, memory: 128Mi }
+            limits: { cpu: "1", memory: 512Mi }
+          volumeMounts:
+            - name: script
+              mountPath: /scripts
+      volumes:
+        - name: script
+          configMap:
+            name: k6-script

@@ -1,0 +1,16 @@
+# Environnement de test (namespace energydesk-test). Promotion manuelle d'une version validee en dev.
+environment: test
+image:
+  rayagz77: rayagz77
+  tag: "0.1.0"
+api:
+  replicas: 1
+  hpa:
+    minReplicas: 1
+    maxReplicas: 3
+frontend:
+  replicas: 1
+ingress:
+  host: test.energydesk.local
+backup:
+  enabled: false

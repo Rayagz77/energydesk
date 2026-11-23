@@ -1,0 +1,41 @@
+# --- Secrets et configuration locale ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+kubeconfig*
+secrets/
+*.secret.yaml
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Terraform ---
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+tfplan
+
+# --- Helm ---
+deploy/helm/**/charts/*.tgz
+
+# --- Editeurs et systeme ---
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# --- Divers ---
+*.log
+/tmp/

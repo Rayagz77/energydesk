@@ -1,0 +1,24 @@
+# Production sur le cluster cloud. A appliquer dans l'Argo CD installe SUR le cluster cloud
+# (meme fichier, autre cluster). Synchronisation manuelle comme en prod locale.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: energydesk-cloud
+  namespace: argocd
+spec:
+  project: energydesk
+  source:
+    repoURL: https://github.com/rayagz77/energydesk.git
+    targetRevision: main
+    path: deploy/helm/energydesk
+    helm:
+      releaseName: energydesk
+      valueFiles:
+        - values.yaml
+        - values-cloud.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: energydesk-prod
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

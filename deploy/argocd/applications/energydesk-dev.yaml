@@ -1,0 +1,36 @@
+# Application Argo CD de l'environnement de developpement.
+# Synchronisation AUTOMATIQUE : chaque commit sur main (dont le nouveau tag d'image ecrit par la CI)
+# est deploye sans intervention. selfHeal annule toute modification manuelle faite dans le cluster.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: energydesk-dev
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: energydesk
+  source:
+    repoURL: https://github.com/rayagz77/energydesk.git   # source Git
+    targetRevision: main                               # branche suivie
+    path: deploy/helm/energydesk                       # chemin du chart
+    helm:
+      releaseName: energydesk
+      valueFiles:
+        - values.yaml
+        - values-dev.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: energydesk-dev                          # namespace cible
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 2m

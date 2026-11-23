@@ -1,0 +1,29 @@
+# Environnement de test : synchronisation automatique, mais le tag n'evolue que par promotion
+# (workflow GitHub "promote" qui ecrit le tag valide en dev dans values-test.yaml).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: energydesk-test
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: energydesk
+  source:
+    repoURL: https://github.com/rayagz77/energydesk.git
+    targetRevision: main
+    path: deploy/helm/energydesk
+    helm:
+      releaseName: energydesk
+      valueFiles:
+        - values.yaml
+        - values-test.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: energydesk-test
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

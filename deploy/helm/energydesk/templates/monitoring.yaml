@@ -1,0 +1,104 @@
+{{- if .Values.monitoring.enabled }}
+# Prometheus (kube-prometheus-stack) lit /metrics de l'API et du worker toutes les 15 s.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "ed.fullname" . }}
+  labels:
+    {{- include "ed.labels" . | nindent 4 }}
+    {{- toYaml .Values.monitoring.labels | nindent 4 }}
+spec:
+  selector:
+    matchExpressions:
+      - key: app.kubernetes.io/instance
+        operator: In
+        values: [{{ .Release.Name | quote }}]
+      - key: app.kubernetes.io/component
+        operator: In
+        values: ["api", "worker"]
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+    - port: metrics
+      path: /metrics
+      interval: 15s
+---
+# Alertes et regles d'enregistrement des SLI (voir docs/observabilite.md).
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "ed.fullname" . }}
+  labels:
+    {{- include "ed.labels" . | nindent 4 }}
+    {{- toYaml .Values.monitoring.labels | nindent 4 }}
+spec:
+  groups:
+    - name: energydesk-sli
+      rules:
+        # SLI disponibilite : part des requetes /api sans erreur serveur (5xx).
+        - record: energydesk:api_availability:ratio_rate5m
+          expr: |
+            1 - (
+              sum by (namespace) (rate(http_requests_total{namespace="{{ .Release.Namespace }}", path=~"/api/.*", status=~"5.."}[5m]))
+              /
+              clamp_min(sum by (namespace) (rate(http_requests_total{namespace="{{ .Release.Namespace }}", path=~"/api/.*"}[5m])), 1e-9)
+            )
+        # SLI latence : part des requetes /api servies en moins de 300 ms.
+        - record: energydesk:api_latency_under_300ms:ratio_rate5m
+          expr: |
+            sum by (namespace) (rate(http_request_duration_seconds_bucket{namespace="{{ .Release.Namespace }}", path=~"/api/.*", le="0.3"}[5m]))
+            /
+            clamp_min(sum by (namespace) (rate(http_request_duration_seconds_count{namespace="{{ .Release.Namespace }}", path=~"/api/.*"}[5m])), 1e-9)
+    - name: energydesk-alerts
+      rules:
+        - alert: EnergyDeskApiDown
+          # Aucune instance de l'API n'est joignable par Prometheus depuis 1 minute.
+          expr: sum(up{namespace="{{ .Release.Namespace }}", service="{{ include "ed.fullname" . }}-api"}) == 0 or absent(up{namespace="{{ .Release.Namespace }}", service="{{ include "ed.fullname" . }}-api"})
+          for: 1m
+          labels:
+            severity: critical
+            application: energydesk
+          annotations:
+            summary: "API EnergyDesk indisponible ({{ .Release.Namespace }})"
+            description: "Aucun pod de l'API ne repond depuis plus d'une minute."
+        - alert: EnergyDeskHighErrorRate
+          expr: (1 - energydesk:api_availability:ratio_rate5m{namespace="{{ .Release.Namespace }}"}) > 0.05
+          for: 5m
+          labels:
+            severity: warning
+            application: energydesk
+          annotations:
+            summary: "Taux d'erreur 5xx superieur a 5 % ({{ .Release.Namespace }})"
+            description: "Le SLO de disponibilite (99 %) est menace."
+        - alert: EnergyDeskSlowApi
+          expr: energydesk:api_latency_under_300ms:ratio_rate5m{namespace="{{ .Release.Namespace }}"} < 0.95
+          for: 10m
+          labels:
+            severity: warning
+            application: energydesk
+          annotations:
+            summary: "Moins de 95 % des requetes en moins de 300 ms ({{ .Release.Namespace }})"
+        - alert: EnergyDeskWorkerDisconnected
+          expr: max(worker_rabbitmq_connected{namespace="{{ .Release.Namespace }}"}) == 0
+          for: 2m
+          labels:
+            severity: warning
+            application: energydesk
+          annotations:
+            summary: "Le worker n'est plus connecte a RabbitMQ ({{ .Release.Namespace }})"
+{{- if .Values.monitoring.dashboard }}
+---
+# Dashboard Grafana technique, charge automatiquement par le sidecar de Grafana.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ed.fullname" . }}-grafana-dashboard
+  labels:
+    {{- include "ed.labels" . | nindent 4 }}
+    grafana_dashboard: "1"
+data:
+  energydesk-{{ .Release.Namespace }}.json: |-
+{{ .Files.Get "files/grafana-dashboard.json" | replace "__NAMESPACE__" .Release.Namespace | indent 4 }}
+{{- end }}
+{{- end }}

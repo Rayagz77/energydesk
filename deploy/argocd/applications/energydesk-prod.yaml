@@ -1,0 +1,26 @@
+# Production : PAS de synchronisation automatique. Argo CD affiche "OutOfSync" quand Git change ;
+# un humain declenche la synchronisation (bouton SYNC ou "argocd app sync energydesk-prod").
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: energydesk-prod
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: energydesk
+  source:
+    repoURL: https://github.com/rayagz77/energydesk.git
+    targetRevision: main
+    path: deploy/helm/energydesk
+    helm:
+      releaseName: energydesk
+      valueFiles:
+        - values.yaml
+        - values-prod.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: energydesk-prod
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,6 @@
+# Outils de developpement et de test (non installes dans l'image de production)
+-r requirements.txt
+pytest==9.2.0
+httpx==0.28.1
+moto[s3]==5.2.6
+ruff==0.17.6

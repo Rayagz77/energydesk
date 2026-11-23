@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EnergyDesk — Tickets</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/tickets.js"></script>
+</head>
+<body>
+  <main class="container">
+    <h1>Tickets</h1>
+    <div id="message" class="message hidden" role="alert"></div>
+    <section class="card">
+      <form class="toolbar" id="filters">
+        <div class="field">
+          <label for="f-status">Statut</label>
+          <select id="f-status" name="status">
+            <option value="">Tous</option>
+            <option value="nouveau">Nouveau</option>
+            <option value="en_cours">En cours</option>
+            <option value="resolu">Résolu</option>
+            <option value="ferme">Fermé</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-priority">Priorité</label>
+          <select id="f-priority" name="priority">
+            <option value="">Toutes</option>
+            <option value="basse">Basse</option>
+            <option value="moyenne">Moyenne</option>
+            <option value="haute">Haute</option>
+            <option value="critique">Critique</option>
+          </select>
+        </div>
+        <button class="btn" type="submit">Filtrer</button>
+        <a class="btn secondary" href="new-ticket.html">Nouveau ticket</a>
+      </form>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Titre</th><th>Équipement</th><th>Priorité</th><th>Statut</th><th>Demandeur</th><th>Agent</th><th>Créé le</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="notice" id="count"></p>
+      <div class="toolbar">
+        <button class="btn small secondary" type="button" id="prev">Précédent</button>
+        <button class="btn small secondary" type="button" id="next">Suivant</button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,161 @@
+# EnergyDesk - pile complete en local : front, API, worker, PostgreSQL, MinIO, RabbitMQ.
+#
+#   Copy-Item .env.example .env      (puis remplacer chaque "change-me")
+#   docker compose up -d --build
+#   docker compose ps                (tous les services "healthy" ou "running")
+#   Application : http://localhost:8080      Documentation API : http://localhost:8080/api/docs
+#   Console RabbitMQ : http://localhost:15672   Console MinIO : http://localhost:9001
+#
+# Les ports sont publies sur 127.0.0.1 uniquement (pas d'acces depuis le reseau local).
+# Deux reseaux separent les flux : "edge" (front <-> API) et "backend" (API, worker, donnees).
+
+name: energydesk
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    ports:
+      - "127.0.0.1:15672:15672"
+    networks: [backend]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  minio:
+    # MinIO communautaire n'est plus publie officiellement (projet archive en 2026).
+    # Image maintenue par Chainguard. Pour la tracabilite, epingler le digest :
+    #   docker pull cgr.dev/chainguard/minio:latest
+    #   docker inspect --format "{{index .RepoDigests 0}}" cgr.dev/chainguard/minio:latest
+    # puis remplacer la ligne ci-dessous par l'image@sha256:... obtenue.
+    image: ${MINIO_IMAGE:-cgr.dev/chainguard/minio:latest}
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - miniodata:/data
+    ports:
+      - "127.0.0.1:9001:9001"
+    networks: [backend]
+    # Pas de healthcheck : l'image minimale ne contient ni curl ni wget.
+    # L'API reessaie la creation du bucket et le worker reessaie ses ecritures.
+    restart: unless-stopped
+
+  migrate:
+    # Tache unique : applique les migrations Alembic puis s'arrete.
+    image: ghcr.io/${GITHUB_OWNER:-local}/energydesk-api:${IMAGE_TAG:-dev}
+    build: ./backend
+    command: ["alembic", "upgrade", "head"]
+    environment: &db_env
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [backend]
+    restart: "no"
+
+  api:
+    image: ghcr.io/${GITHUB_OWNER:-local}/energydesk-api:${IMAGE_TAG:-dev}
+    build: ./backend
+    environment:
+      <<: *db_env
+      APP_ENV: ${APP_ENV:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-30}
+      S3_ENDPOINT_URL: http://minio:9000
+      # MinIO attend des requetes signees pour la region us-east-1 (sa valeur par defaut).
+      S3_REGION: us-east-1
+      # En local, l'API utilise le compte MinIO principal (compromis documente).
+      # En cloud, elle utilise une cle IAM dediee au moindre privilege (voir Terraform).
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      S3_BUCKET_ATTACHMENTS: ${S3_BUCKET_ATTACHMENTS:-energydesk-attachments}
+      S3_CREATE_BUCKET: "true"
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-5}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    networks: [edge, backend]
+    restart: unless-stopped
+
+  worker:
+    image: ghcr.io/${GITHUB_OWNER:-local}/energydesk-worker:${IMAGE_TAG:-dev}
+    build: ./worker
+    environment:
+      <<: *db_env
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_REGION: us-east-1
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      S3_BUCKET_ATTACHMENTS: ${S3_BUCKET_ATTACHMENTS:-energydesk-attachments}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      WORKER_SWEEP_INTERVAL: "30"
+      WORKER_SWEEP_MIN_AGE: "30"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+    networks: [backend]
+    restart: unless-stopped
+
+  frontend:
+    image: ghcr.io/${GITHUB_OWNER:-local}/energydesk-frontend:${IMAGE_TAG:-dev}
+    build: ./frontend
+    environment:
+      API_UPSTREAM: api:8000
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [edge]
+    restart: unless-stopped
+
+networks:
+  edge:
+  backend:
+
+volumes:
+  pgdata:
+  rabbitmqdata:
+  miniodata:

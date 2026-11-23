@@ -1,0 +1,31 @@
+# Production sur le cluster cloud (Scaleway Kapsule) : base managee et stockage objet du fournisseur.
+# Les valeurs <...> proviennent des sorties Terraform (terraform output).
+environment: prod
+image:
+  rayagz77: rayagz77
+  tag: "0.1.0"
+postgres:
+  enabled: false
+externalDatabase:
+  host: "<terraform output db_private_host>"
+  port: 5432
+  sslMode: require
+minio:
+  enabled: false
+s3:
+  endpointUrl: https://s3.fr-par.scw.cloud
+  region: fr-par
+  bucket: "<terraform output attachments_bucket>"
+  createBucket: false
+monitoring:
+  enabled: false   # kube-prometheus-stack n'est pas installe sur le cluster cloud (cout)
+backup:
+  enabled: false   # la base managee est sauvegardee par le fournisseur (voir docs/securite-iso27001.md)
+api:
+  replicas: 2
+  hpa:
+    minReplicas: 2
+    maxReplicas: 5
+ingress:
+  className: traefik
+  host: "<IP-du-load-balancer>.nip.io"

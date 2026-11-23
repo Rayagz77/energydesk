@@ -1,0 +1,134 @@
+# Valeurs par defaut du chart EnergyDesk.
+# Chaque environnement surcharge ces valeurs : values-dev.yaml, values-test.yaml,
+# values-prod.yaml (cluster local) et values-cloud.yaml (cluster cloud).
+
+environment: dev
+
+image:
+  registry: ghcr.io
+  rayagz77: rayagz77            # nom du compte GitHub, en minuscules
+  tag: "0.1.0"            # mis a jour automatiquement par la CI (jamais "latest")
+  pullPolicy: IfNotPresent
+imagePullSecrets: []      # utile seulement si les images GHCR sont privees
+
+# Secret Kubernetes cree HORS de Git (scripts/create-k8s-secrets.ps1 ou Terraform).
+# Cles attendues : DB_PASSWORD, JWT_SECRET_KEY, S3_ACCESS_KEY, S3_SECRET_KEY,
+#                  RABBITMQ_PASSWORD, MINIO_ROOT_USER, MINIO_ROOT_PASSWORD
+existingSecret: energydesk-secrets
+
+config:
+  logLevel: INFO
+  jwtExpireMinutes: 30
+  maxUploadMb: 5
+  dbName: energydesk
+  dbUser: energydesk
+  rabbitmqUser: energydesk
+  notificationRecipient: support@energydesk.local
+
+api:
+  replicas: 2
+  resources:
+    requests: { cpu: 100m, memory: 160Mi }
+    limits: { cpu: 500m, memory: 320Mi }
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 60
+
+worker:
+  replicas: 1
+  sweepIntervalSeconds: 60
+  sweepMinAgeSeconds: 60
+  resources:
+    requests: { cpu: 50m, memory: 96Mi }
+    limits: { cpu: 250m, memory: 192Mi }
+
+frontend:
+  replicas: 2
+  resources:
+    requests: { cpu: 20m, memory: 32Mi }
+    limits: { cpu: 200m, memory: 64Mi }
+
+# Strategie de deploiement : rolling update sans interruption.
+# maxUnavailable: 0 -> un ancien pod n'est arrete que lorsqu'un nouveau est pret (readiness).
+rollingUpdate:
+  maxSurge: 1
+  maxUnavailable: 0
+
+postgres:
+  enabled: true           # false en cloud : base managee creee par Terraform
+  image: postgres:16-alpine
+  storage: 1Gi
+  storageClass: ""        # vide = classe par defaut du cluster
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+# Utilise uniquement si postgres.enabled=false
+externalDatabase:
+  host: ""
+  port: 5432
+  sslMode: require
+
+rabbitmq:
+  image: rabbitmq:4-management-alpine
+  storage: 1Gi
+  storageClass: ""
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+minio:
+  enabled: true           # false en cloud : stockage objet du fournisseur
+  # Epingler par digest pour la tracabilite : cgr.dev/chainguard/minio@sha256:...
+  image: cgr.dev/chainguard/minio:latest
+  storage: 2Gi
+  storageClass: ""
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+s3:
+  endpointUrl: ""         # vide + minio.enabled -> http://<release>-minio:9000
+  region: us-east-1       # region attendue par MinIO ; fr-par en cloud (values-cloud.yaml)
+  bucket: energydesk-attachments
+  createBucket: true      # true avec MinIO ; false en cloud (bucket cree par Terraform)
+
+ingress:
+  enabled: true
+  className: traefik
+  host: energydesk.local
+  annotations: {}
+  tls:
+    enabled: false
+    secretName: energydesk-tls
+
+monitoring:
+  enabled: true           # necessite kube-prometheus-stack (CRD ServiceMonitor et PrometheusRule)
+  labels:
+    release: kube-prometheus-stack
+  dashboard: true
+
+backup:
+  enabled: true
+  schedule: "0 2 * * *"   # tous les jours a 2 h
+  bucket: energydesk-backups
+  postgresImage: postgres:16-alpine
+
+networkPolicy:
+  enabled: false          # actif seulement si le CNI applique les NetworkPolicies (ex. k3s)
+
+rbac:
+  viewerGroup: energydesk-viewers   # groupe en lecture seule sur le namespace
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]

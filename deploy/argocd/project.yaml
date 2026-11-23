@@ -1,0 +1,22 @@
+# AppProject Argo CD : limite ce que les applications EnergyDesk ont le droit de deployer.
+# - une seule source Git autorisee (ce depot)
+# - uniquement dans les namespaces energydesk-*
+# - pas de ressources a l'echelle du cluster (sauf Namespace)
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: energydesk
+  namespace: argocd
+spec:
+  description: Applications EnergyDesk (dev, test, prod)
+  sourceRepos:
+    - https://github.com/rayagz77/energydesk.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: energydesk-*
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceBlacklist:
+    - group: ""
+      kind: ResourceQuota

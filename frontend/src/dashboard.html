@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EnergyDesk — Tableau de bord</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/dashboard.js"></script>
+</head>
+<body>
+  <main class="container">
+    <h1>Tableau de bord</h1>
+    <p class="notice" id="scope"></p>
+    <div id="message" class="message hidden" role="alert"></div>
+    <section class="grid" id="kpis" aria-label="Indicateurs des tickets"></section>
+    <section class="card spaced">
+      <h2>Derniers tickets</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Titre</th><th>Équipement</th><th>Priorité</th><th>Statut</th><th>Créé le</th></tr></thead>
+          <tbody id="recent"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

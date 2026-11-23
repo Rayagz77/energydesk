@@ -1,0 +1,77 @@
+{{- if and .Values.backup.enabled .Values.postgres.enabled }}
+# Sauvegarde quotidienne de PostgreSQL vers le stockage objet (ISO 27001 A.8.13).
+# 1) initContainer "dump" : pg_dump au format compresse dans un volume temporaire.
+# 2) conteneur "upload"   : envoie le fichier dans le bucket de sauvegarde (python -m app.backup).
+# Lancer une sauvegarde immediate :
+#   kubectl create job --from=cronjob/{{ include "ed.fullname" . }}-backup backup-manuel -n {{ .Release.Namespace }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "ed.fullname" . }}-backup
+  labels:
+    {{- include "ed.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            {{- include "ed.selector" (dict "ctx" . "component" "backup") | nindent 12 }}
+        spec:
+          restartPolicy: Never
+          serviceAccountName: {{ include "ed.fullname" . }}-app
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            fsGroup: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: dump
+              image: {{ .Values.backup.postgresImage }}
+              command: ["sh", "-c"]
+              args:
+                - >-
+                  pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -Fc
+                  -f "/backup/energydesk-$(date +%Y%m%d-%H%M%S).dump" && ls -l /backup
+              envFrom:
+                - configMapRef:
+                    name: {{ include "ed.fullname" . }}-config
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.existingSecret }}
+                      key: DB_PASSWORD
+              securityContext:
+                {{- toYaml .Values.containerSecurityContext | nindent 16 }}
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+          containers:
+            - name: upload
+              image: {{ include "ed.image" (dict "ctx" . "component" "api") }}
+              command: ["sh", "-c", "for f in /backup/*.dump; do python -m app.backup upload \"$f\"; done"]
+              envFrom:
+                - configMapRef:
+                    name: {{ include "ed.fullname" . }}-config
+              env:
+                {{- include "ed.secretEnv" (dict "ctx" . "name" "S3_ACCESS_KEY") | nindent 16 }}
+                {{- include "ed.secretEnv" (dict "ctx" . "name" "S3_SECRET_KEY") | nindent 16 }}
+              securityContext:
+                {{- toYaml .Values.containerSecurityContext | nindent 16 }}
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+                  readOnly: true
+          volumes:
+            - name: backup
+              emptyDir: {}
+{{- end }}

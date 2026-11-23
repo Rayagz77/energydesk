@@ -1,0 +1,9 @@
+# Copier en terraform.tfvars si besoin de changer les valeurs par defaut.
+kube_context    = "minikube"      # "k3d-energydesk" si le cluster est cree avec k3d
+install_traefik = true            # false avec k3s/k3d (Traefik deja present)
+
+# Exemple d'epinglage apres une premiere installation ("helm list -A") :
+# chart_versions = {
+#   kube_prometheus_stack = "x.y.z"
+#   loki                  = "x.y.z"
+# }
