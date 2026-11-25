@@ -1,0 +1,13 @@
+=== Sauvegarde ===
+total 12
+-rw-r--r--    1 10001    10001        11745 Nov 25 22:26 energydesk-20261125-222607.dump
+Sauvegarde envoyee : s3://energydesk-backups/postgres/energydesk-20261125-222607.dump (11745 octets)
+=== Restauration ===
+Sauvegarde recuperee : s3://energydesk-backups/postgres/energydesk-20261125-222607.dump -> /restore/latest.dump
+=== Restauration terminee : lignes par table ===
+users : 1
+tickets : 0
+comments : 0
+attachments : 0
+=== Comparaison avec la base de production ===
+tickets en production : 0
