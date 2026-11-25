@@ -2,7 +2,7 @@
 environment: dev
 image:
   owner: rayagz77
-  tag: "0.1.0"   # mis a jour par la CI a chaque push sur main
+  tag: "0.1.0-7788532"   # ecrit par la CI
 api:
   replicas: 1
   hpa:
