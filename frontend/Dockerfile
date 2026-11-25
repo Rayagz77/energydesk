@@ -8,7 +8,9 @@ LABEL org.opencontainers.image.title="energydesk-frontend" \
       org.opencontainers.image.source="https://github.com/rayagz77/energydesk"
 ENV API_UPSTREAM=api:8000
 USER root
-RUN rm -f /etc/nginx/conf.d/default.conf && mkdir -p /etc/nginx/snippets
+# Correctif de securite : brotli-libs (CVE-2026-111497) mis a jour depuis les depots Alpine.
+RUN apk upgrade --no-cache brotli-libs \
+ && rm -f /etc/nginx/conf.d/default.conf && mkdir -p /etc/nginx/snippets
 COPY nginx/security-headers.conf /etc/nginx/snippets/security-headers.conf
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY src/ /usr/share/nginx/html/

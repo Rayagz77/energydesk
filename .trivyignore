@@ -1,0 +1,13 @@
+# Exceptions Trivy justifiees (gestion des vulnerabilites, ISO 27001 A.8.8).
+# Chaque exception expire : apres la date, Trivy bloque de nouveau le pipeline.
+#
+# Image frontend (nginx-unprivileged, nginx 1.30.6 venant de nginx.org).
+# Version corrigee : nginx 1.30.7. Non exploitables dans EnergyDesk, car les fonctions
+# vulnerables ne sont pas activees dans frontend/nginx/default.conf.template :
+#   - aucun bloc "mail { }"                  -> proxy mail non utilise
+#   - "listen 8080;" sans option http2/quic  -> HTTP/2 et HTTP/3 non utilises
+# Action : reconstruire l'image des que nginx-unprivileged publie nginx 1.30.7 (Dependabot).
+CVE-2026-113425 exp:2026-12-31
+CVE-2026-121810 exp:2026-12-31
+CVE-2026-123007 exp:2026-12-31
+CVE-2026-123633 exp:2026-12-31
