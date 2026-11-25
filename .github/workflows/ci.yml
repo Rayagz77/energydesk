@@ -32,8 +32,8 @@ jobs:
     name: Qualite du code (ruff)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - run: pip install ruff==0.17.6
@@ -59,8 +59,8 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -71,7 +71,7 @@ jobs:
           DB_HOST: localhost
           DB_PASSWORD: test
         run: pytest --junitxml=pytest-backend.xml
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: pytest-backend
@@ -94,8 +94,8 @@ jobs:
       run:
         working-directory: worker
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -106,7 +106,7 @@ jobs:
           DB_HOST: localhost
           DB_PASSWORD: test
         run: pytest --junitxml=pytest-worker.xml
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: pytest-worker
@@ -116,9 +116,9 @@ jobs:
     name: Scan securite du depot (dependances, secrets, configuration)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Trivy - rapport des vulnerabilites HIGH et CRITICAL (non bloquant)
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -126,7 +126,7 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: "0"
       - name: Trivy - secrets et vulnerabilites CRITICAL corrigeables (bloquant)
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -135,7 +135,7 @@ jobs:
           ignore-unfixed: true
           exit-code: "1"
       - name: Trivy - mauvaises configurations (Dockerfile, Kubernetes, Terraform) - rapport
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: config
           scan-ref: .
@@ -146,8 +146,8 @@ jobs:
     name: Validation Helm et Terraform
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: azure/setup-helm@v4
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
       - name: Helm lint (chaque environnement)
         run: |
           for env in dev test prod cloud; do
@@ -161,7 +161,7 @@ jobs:
               -f deploy/helm/energydesk/values-$env.yaml --set externalDatabase.host=db.example > rendered-$env.yaml
             ./kubeconform -strict -summary -ignore-missing-schemas rendered-$env.yaml
           done
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
       - name: Terraform fmt (rapport ; corriger avec "terraform fmt -recursive infra/terraform")
         continue-on-error: true
         run: terraform fmt -check -recursive -diff infra/terraform
@@ -192,7 +192,7 @@ jobs:
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Calcul des tags (version + SHA, jamais "latest" seul)
         id: meta
         run: |
@@ -203,9 +203,9 @@ jobs:
           echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
           echo "tag=${VERSION}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
           echo "Image : ${IMAGE}:${VERSION}-${SHORT_SHA}"
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
       - name: Build (charge localement pour le scan)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.context }}
           load: true
@@ -218,7 +218,7 @@ jobs:
       - name: Taille de l'image (mesure FinOps)
         run: docker image ls ${{ steps.meta.outputs.image }} --format "{{.Repository}}:{{.Tag}} {{.Size}}"
       - name: Trivy - scan de l'image (bloquant sur CRITICAL corrigeable)
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}
           severity: CRITICAL
@@ -226,7 +226,7 @@ jobs:
           exit-code: "1"
       - name: Connexion a GHCR
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -247,7 +247,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Ecrire le nouveau tag dans values-dev.yaml
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
