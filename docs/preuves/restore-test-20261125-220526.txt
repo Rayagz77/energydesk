@@ -1,0 +1,14 @@
+=== Sauvegarde ===
+total 12
+-rw-r--r--    1 10001    10001        11555 Nov 25 22:05 energydesk-20261125-220527.dump
+Sauvegarde envoyee : s3://energydesk-backups/postgres/energydesk-20261125-220527.dump (11555 octets)
+=== Restauration ===
+Sauvegarde recuperee : s3://energydesk-backups/postgres/energydesk-20261125-220527.dump -> /restore/latest.dump
+NOTICE:  database "energydesk_restore_test" does not exist, skipping
+=== Restauration terminee : lignes par table ===
+users : 0
+tickets : 0
+comments : 0
+attachments : 0
+=== Comparaison avec la base de production ===
+tickets en production : 0

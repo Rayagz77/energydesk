@@ -1,0 +1,136 @@
+**********************
+PowerShell transcript start
+Start time: 20261125212623
+Username: codespaces-55777e\vscode
+RunAs User: codespaces-55777e\vscode
+Configuration Name: 
+Machine: codespaces-55777e (Unix 6.8.0.1070)
+Host Application: /usr/bin/pwsh -noexit -command . "/vscode/bin/linux-x64/661626d0e72f97806550790a98fb87116c9db825/out/vs/workbench/contrib/terminal/common/scripts/shellIntegration.ps1"
+Process ID: 83674
+PSVersion: 7.7.0
+PSEdition: Core
+GitCommitId: 7.7.0
+OS: Ubuntu 24.04.3 LTS
+Platform: Unix
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Transcript started, output file is docs/preuves/sprint-k8s-20261125.txt
+]633;D;0]633;A]633;P;Cwd=/workspaces/energydeskPS /workspaces/energydesk> ]633;B
+PS>kubectl get pods -n energydesk-dev -l app.kubernetes.io/component=api
+NAME                              READY   STATUS    RESTARTS   AGE
+energydesk-api-5984f48b78-jcpqs   1/1     Running   0          64m
+]633;D;0]633;A]633;P;Cwd=/workspaces/energydeskPS /workspaces/energydesk> ]633;B
+PS>kubectl delete pod -n energydesk-dev -l app.kubernetes.io/component=api
+pod "energydesk-api-5984f48b78-jcpqs" deleted from energydesk-dev namespace
+]633;D;0]633;A]633;P;Cwd=/workspaces/energydeskPS /workspaces/energydesk> ]633;B
+PS>kubectl get pods -n energydesk-dev -l app.kubernetes.io/component=api
+NAME                              READY   STATUS    RESTARTS   AGE
+energydesk-api-5984f48b78-xtghl   0/1     Running   0          8s
+]633;D;0]633;A]633;P;Cwd=/workspaces/energydeskPS /workspaces/energydesk> ]633;B
+PS>kubectl exec -n energydesk-dev energydesk-postgres-0 -- psql -U energydesk -d energydesk -c "SELECT count(*) FROM tickets;"
+ count
+-------
+     1
+(1 row)
+
+]633;D;0]633;A]633;P;Cwd=/workspaces/energydeskPS /workspaces/energydesk> ]633;B
+PS>kubectl delete pod -n energydesk-dev energydesk-postgres-0
+pod "energydesk-postgres-0" deleted from energydesk-dev namespace
+]633;D;0]633;A]633;P;Cwd=/workspaces/energydeskPS /workspaces/energydesk> ]633;B
+PS>kubectl wait --for=condition=ready pod/energydesk-postgres-0 -n energydesk-dev --timeout=120s
+pod/energydesk-postgres-0 condition met
+]633;D;0]633;A]633;P;Cwd=/workspaces/energydeskPS /workspaces/energydesk> ]633;B
+PS>kubectl exec -n energydesk-dev energydesk-postgres-0 -- psql -U energydesk -d energydesk -c "SELECT count(*) FROM tickets;"
+ count
+-------
+     1
+(1 row)
+
+]633;D;0]633;A]633;P;Cwd=/workspaces/energydeskPS /workspaces/energydesk> ]633;B
+PS>kubectl rollout history deploy/energydesk-api -n energydesk-dev
+deployment.apps/energydesk-api
+REVISION  CHANGE-CAUSE
+1         <none>
+2         <none>
+
+]633;D;0]633;A]633;P;Cwd=/workspaces/energydeskPS /workspaces/energydesk> ]633;B
+PS>kubectl get rs -n energydesk-dev -l app.kubernetes.io/component=api
+NAME                        DESIRED   CURRENT   READY   AGE
+energydesk-api-5984f48b78   1         1         1       65m
+energydesk-api-5f68644cb6   0         0         0       95m
+]633;D;0]633;A]633;P;Cwd=/workspaces/energydeskPS /workspaces/energydesk> ]633;B
+PS>kubectl top pods -n energydesk-dev
+NAME                                   CPU(cores)   MEMORY(bytes)
+energydesk-api-5984f48b78-xtghl        2m           94Mi
+energydesk-frontend-7dfcc9f856-9xtbn   1m           5Mi
+energydesk-minio-cdf4f45bc-fmknm       2m           65Mi
+energydesk-postgres-0                  9m           20Mi
+energydesk-rabbitmq-0                  146m         95Mi
+energydesk-worker-7d799cd644-6pk75     1m           52Mi
+]633;D;0]633;A]633;P;Cwd=/workspaces/energydeskPS /workspaces/energydesk> ]633;B
+PS>kubectl create configmap k6-script -n energydesk-dev --from-file=scripts/load/k6-hpa.js --dry-run=client -o yaml | kubectl apply -f -
+]633;D;0]633;A]633;P;Cwd=/workspaces/energydeskPS /workspaces/energydesk> ]633;B
+PS>kubectl delete job k6-load -n energydesk-dev --ignore-not-found
+]633;D;0]633;A]633;P;Cwd=/workspaces/energydeskPS /workspaces/energydesk> ]633;B
+PS>kubectl apply -f deploy/k8s/k6-load-job.yaml
+job.batch/k6-load created
+Warning: would violate PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "k6" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "k6" must set securityContext.capabilities.drop=["ALL"]), runAsNonRoot != true (pod or container "k6" must set securityContext.runAsNonRoot=true), seccompProfile (pod or container "k6" must set securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
+Warning: would violate PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "k6" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "k6" must set securityContext.capabilities.drop=["ALL"]), runAsNonRoot != true (pod or container "k6" must set securityContext.runAsNonRoot=true), seccompProfile (pod or container "k6" must set securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
+]633;D;0]633;A]633;P;Cwd=/workspaces/energydeskPS /workspaces/energydesk> ]633;B
+PS>kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from [::1]:3000 -> 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+Handling connection for 3000
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+]633;D;1]633;A]633;P;Cwd=/workspaces/energydeskPS /workspaces/energydesk> ]633;B
