@@ -2,7 +2,7 @@
 environment: dev
 image:
   owner: rayagz77
-  tag: "0.1.0-7788532"   # ecrit par la CI
+  tag: "0.1.0-3774da2"   # ecrit par la CI
 api:
   replicas: 1
   hpa:
