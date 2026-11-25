@@ -1,0 +1,8 @@
+[OK] Agent support disponible : agent@energydesk.local
+[OK] Inscription et connexion de alice.22317@exemple.fr
+[OK] Ticket cree : 1a2880d2-a27f-4900-810e-3ba2666ecf90 (statut nouveau, priorite critique)
+[OK] Piece jointe stockee dans MinIO : energydesk-demo.png (70 octets)
+[OK] Notification traitee par le worker a 11/25/2026 12:36:05
+[OK] Isolation verifiee : un autre utilisateur recoit une erreur (404)
+[OK] Agent : ticket attribue, passe en cours, commentaire ajoute
+[OK] Tableau de bord agent : ouverts=0 en_cours=1 resolus=0 critiques=1

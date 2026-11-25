@@ -38,8 +38,8 @@ Sources : pages de prix des fournisseurs, consultées le 23/11/2026. À revérif
 | Étapes | une seule | multi-stage (builder puis runtime) |
 | Contenu | code, tests, outils de dev, cache pip | environnement virtuel et code uniquement |
 | Utilisateur | root | `app` (uid 10001) |
-| Taille mesurée | à compléter (`scripts/measure-images.ps1`) | à compléter |
-| Gain | | à compléter (%) |
+| Taille mesurée (25/11/2026, Codespaces) | 2,1 Go (≈ 2 000 Mio) | 382 Mo (≈ 365 Mio) |
+| Gain | | **− 81,8 %** (mesuré, `scripts/measure-images.ps1`) |
 
 Impact : téléchargements plus rapides lors des déploiements et du scaling, moins de stockage dans le registre, moins de paquets donc moins de vulnérabilités.
 Limite : l'économie directe en euros est faible à cette échelle. Le gain principal porte sur la vitesse et la sécurité.

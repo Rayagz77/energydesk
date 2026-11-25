@@ -1,0 +1,5 @@
+energydesk-api:naive  2.1GB
+energydesk-api:optimise  382MB
+energydesk-worker:optimise  274MB
+energydesk-frontend:optimise  91.9MB
+API : naive = 2,000 Mo ; optimisee = 365 Mo ; gain = 81.8 %
