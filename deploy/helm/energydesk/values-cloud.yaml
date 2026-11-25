@@ -2,7 +2,7 @@
 # Les valeurs <...> proviennent des sorties Terraform (terraform output).
 environment: prod
 image:
-  rayagz77: rayagz77
+  owner: rayagz77
   tag: "0.1.0"
 postgres:
   enabled: false

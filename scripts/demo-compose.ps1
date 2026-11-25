@@ -47,9 +47,10 @@ $ticket = Invoke-RestMethod -Method Post "$api/tickets" -Headers $userHeaders -C
 Step "Ticket cree : $($ticket.id) (statut $($ticket.status), priorite $($ticket.priority))"
 
 # 4. Piece jointe (petite image PNG generee)
-$png = Join-Path $env:TEMP "energydesk-demo.png"
+$png = Join-Path ([IO.Path]::GetTempPath()) "energydesk-demo.png"
 [IO.File]::WriteAllBytes($png, [Convert]::FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="))
-$upload = curl.exe -s -X POST "$api/tickets/$($ticket.id)/attachments" -H "Authorization: Bearer $userToken" -F "file=@$png;type=image/png" | ConvertFrom-Json
+$curlCmd = if ($IsLinux -or $IsMacOS) { "curl" } else { "curl.exe" }
+$upload = & $curlCmd -s -X POST "$api/tickets/$($ticket.id)/attachments" -H "Authorization: Bearer $userToken" -F "file=@$png;type=image/png" | ConvertFrom-Json
 Step "Piece jointe stockee dans MinIO : $($upload.original_filename) ($($upload.size_bytes) octets)"
 
 # 5. Notification asynchrone (worker)

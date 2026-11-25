@@ -6,7 +6,7 @@ environment: dev
 
 image:
   registry: ghcr.io
-  rayagz77: rayagz77            # nom du compte GitHub, en minuscules
+  owner: rayagz77            # nom du compte GitHub, en minuscules
   tag: "0.1.0"            # mis a jour automatiquement par la CI (jamais "latest")
   pullPolicy: IfNotPresent
 imagePullSecrets: []      # utile seulement si les images GHCR sont privees

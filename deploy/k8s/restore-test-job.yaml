@@ -47,7 +47,7 @@ spec:
               set -e;
               dropdb --if-exists -h "$DB_HOST" -U "$DB_USER" energydesk_restore_test;
               createdb -h "$DB_HOST" -U "$DB_USER" energydesk_restore_test;
-              pg_restore -h "$DB_HOST" -U "$DB_USER" -d energydesk_restore_test --no-rayagz77 /restore/latest.dump;
+              pg_restore -h "$DB_HOST" -U "$DB_USER" -d energydesk_restore_test --no-owner /restore/latest.dump;
               echo "=== Restauration terminee : lignes par table ===";
               for t in users tickets comments attachments; do
                 printf "%s : " "$t";
