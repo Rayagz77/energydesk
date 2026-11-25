@@ -1,10 +1,13 @@
 # Traefik remplace ingress-nginx, retire par le projet Kubernetes en mars 2026.
+# Valeurs verifiees contre le schema du chart Traefik 43.0.0.
 ingressClass:
   enabled: true
   isDefaultClass: true
   name: traefik
 service:
-  type: ClusterIP   # acces par "kubectl port-forward" (Codespaces, Minikube) : pas de LoadBalancer
+  # Depuis les versions recentes du chart, le type du Service se place sous "spec".
+  spec:
+    type: ClusterIP   # acces par "kubectl port-forward" (Codespaces, Minikube) : pas de LoadBalancer
 resources:
   requests: { cpu: 50m, memory: 64Mi }
   limits: { cpu: 300m, memory: 192Mi }
