@@ -8,6 +8,15 @@ service:
   # Depuis les versions recentes du chart, le type du Service se place sous "spec".
   spec:
     type: ClusterIP   # acces par "kubectl port-forward" (Codespaces, Minikube) : pas de LoadBalancer
+providers:
+  kubernetesIngress:
+    # Un Service ClusterIP n'a pas d'adresse externe a recopier dans le statut des Ingress.
+    # On publie donc une adresse fixe : 127.0.0.1, puisque l'acces se fait par port-forward.
+    # Sans adresse dans le statut, Argo CD considere l'Ingress "Progressing" indefiniment.
+    publishedService:
+      enabled: false
+    ingressEndpoint:
+      ip: "127.0.0.1"
 resources:
   requests: { cpu: 50m, memory: 64Mi }
   limits: { cpu: 300m, memory: 192Mi }
