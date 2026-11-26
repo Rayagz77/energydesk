@@ -40,7 +40,7 @@ spec:
         - record: energydesk:api_availability:ratio_rate5m
           expr: |
             1 - (
-              sum by (namespace) (rate(http_requests_total{namespace="{{ .Release.Namespace }}", path=~"/api/.*", status=~"5.."}[5m]))
+              (sum by (namespace) (rate(http_requests_total{namespace="{{ .Release.Namespace }}", path=~"/api/.*", status=~"5.."}[5m])) or 0 * sum by (namespace) (rate(http_requests_total{namespace="{{ .Release.Namespace }}", path=~"/api/.*"}[5m])))
               /
               clamp_min(sum by (namespace) (rate(http_requests_total{namespace="{{ .Release.Namespace }}", path=~"/api/.*"}[5m])), 1e-9)
             )
@@ -49,7 +49,7 @@ spec:
           expr: |
             sum by (namespace) (rate(http_request_duration_seconds_bucket{namespace="{{ .Release.Namespace }}", path=~"/api/.*", le="0.3"}[5m]))
             /
-            clamp_min(sum by (namespace) (rate(http_request_duration_seconds_count{namespace="{{ .Release.Namespace }}", path=~"/api/.*"}[5m])), 1e-9)
+            (sum by (namespace) (rate(http_request_duration_seconds_count{namespace="{{ .Release.Namespace }}", path=~"/api/.*"}[5m])) > 0)
     - name: energydesk-alerts
       rules:
         - alert: EnergyDeskApiDown

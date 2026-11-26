@@ -162,7 +162,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum(rate(http_requests_total{namespace=\"__NAMESPACE__\", path=~\"/api/.*\", status=~\"5..\"}[5m])) / clamp_min(sum(rate(http_requests_total{namespace=\"__NAMESPACE__\", path=~\"/api/.*\"}[5m])), 1e-9)",
+          "expr": "(sum(rate(http_requests_total{namespace=\"__NAMESPACE__\", path=~\"/api/.*\", status=~\"5..\"}[5m])) or vector(0)) / clamp_min(sum(rate(http_requests_total{namespace=\"__NAMESPACE__\", path=~\"/api/.*\"}[5m])), 1e-9)",
           "legendFormat": "",
           "refId": "A"
         }
