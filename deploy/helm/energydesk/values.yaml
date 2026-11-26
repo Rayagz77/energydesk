@@ -41,13 +41,13 @@ worker:
   sweepIntervalSeconds: 60
   sweepMinAgeSeconds: 60
   resources:
-    requests: { cpu: 50m, memory: 96Mi }
+    requests: { cpu: 10m, memory: 72Mi }
     limits: { cpu: 250m, memory: 192Mi }
 
 frontend:
   replicas: 2
   resources:
-    requests: { cpu: 20m, memory: 32Mi }
+    requests: { cpu: 25m, memory: 16Mi }
     limits: { cpu: 200m, memory: 64Mi }
 
 # Strategie de deploiement : rolling update sans interruption.
@@ -62,7 +62,7 @@ postgres:
   storage: 1Gi
   storageClass: ""        # vide = classe par defaut du cluster
   resources:
-    requests: { cpu: 100m, memory: 256Mi }
+    requests: { cpu: 160m, memory: 128Mi }
     limits: { cpu: 500m, memory: 512Mi }
 
 # Utilise uniquement si postgres.enabled=false
@@ -76,7 +76,7 @@ rabbitmq:
   storage: 1Gi
   storageClass: ""
   resources:
-    requests: { cpu: 100m, memory: 256Mi }
+    requests: { cpu: 220m, memory: 168Mi }
     limits: { cpu: 500m, memory: 512Mi }
 
 minio:
@@ -86,7 +86,7 @@ minio:
   storage: 2Gi
   storageClass: ""
   resources:
-    requests: { cpu: 50m, memory: 128Mi }
+    requests: { cpu: 10m, memory: 96Mi }
     limits: { cpu: 500m, memory: 512Mi }
 
 s3:
